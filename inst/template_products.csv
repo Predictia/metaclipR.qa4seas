@@ -1,0 +1,6 @@
+product_code,aggr.lon,aggr.lat,aggr.y
+nino3.4,mean,mean,FALSE
+nino3,mean,mean,FALSE
+nino1.2,mean,mean,FALSE
+nino4,mean,mean,FALSE
+map,,,TRUE
