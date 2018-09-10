@@ -1,8 +1,8 @@
-var_code,shortName,longname,units,level,atmos
-t2m,tas,2-m air temperature,K,2m,TRUE
-tp,tp,total precipitation amount,mm,surface,TRUE
-sst,sst,sea-surface temperature,K,Sea-surface,FALSE
-msl,psl,sea-level pressure,Pa,Sea-surface,TRUE
-t,ta850,air temperature 850 mb surface pressure level,K,850mb,TRUE
-z,z850,Geopotential height 850 mb surface pressure level,Pa,850mb,TRUE
-si10,wss,10-m wind speed ,m.s-1,10m,TRUE
+var_code,shortName,longname,units,level,atmos,aggr.d,aggr.m,aggr.y
+t2m,tas,2-m air temperature,K,2m,TRUE,mean,mean,mean
+tp,tp,total precipitation amount,mm,surface,TRUE,sum,sum,sum
+sst,sst,sea-surface temperature,K,Sea-surface,FALSE,mean,mean,mean
+msl,psl,sea-level pressure,Pa,Sea-surface,TRUE,mean,mean,mean
+t,ta850,air temperature 850 mb surface pressure level,K,850mb,TRUE,mean,mean,mean
+z,z850,Geopotential height 850 mb surface pressure level,Pa,850mb,TRUE,mean,mean,mean
+si10,wss,10-m wind speed ,m.s-1,10m,TRUE,mean,mean,mean
