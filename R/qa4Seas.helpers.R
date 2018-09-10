@@ -48,18 +48,20 @@ parseSeason <- function(init, season, several.ok = TRUE) {
 #' @keywords internal
 #' @return Integer, number of members
 
-defineNmembers <- function(model, model.type, combination.method) {
-    fcst.info <- read.table("ignore/qa4seas_prototype/template_fcst_datasets.csv", header = TRUE, sep = ",", stringsAsFactors = FALSE, na.strings = "")
+defineNmembers <- function(model, model.type, combination) {
+    fcst.info <- loadTemplateFile("models")
     ref <- fcst.info[grep(model, fcst.info$qa4seas_code, fixed = TRUE), ]
-    if (combination.method == "multmodsimple") {
-        12
-    } else if (model.type == "hindcast") {
+    n <- if (model.type == "hindcast") {
         ref$HindcastEnsembleSize
     } else if (model.type == "forecast") {
         ref$ForecastEnsembleSize
     } else {
         NULL
     }
+    if (!is.null(combination)) {
+        if (combination == "multmodsimple") n <- 12
+    }
+    return(n)
 }
 
 
@@ -98,7 +100,8 @@ parseInit <- function(init, model.type, par.list) {
     day <- substr(init, 5, 6) %>% as.integer()
     yrs <- if (model.type == "hindcast") {
         if (!"hindcast_period" %in% names(par.list)) stop("\'hindcast_period\' parameter not found")
-        par.list$hindcast_period %>% gsub(pattern = "-", replacement = ":") %>% parse(text = .) %>% eval()
+        aux <- par.list$hindcast_period %>% gsub(pattern = "-", replacement = ":")
+        parse(text = aux) %>% eval()
     } else {
         if (!"forecast_year" %in% names(par.list)) stop("\'forecast_year\' parameter not found")
         par.list$forecast_year %>% as.integer()
@@ -121,21 +124,44 @@ getNdays <- function(d) {
 
 #' @title Read template files
 #' @description Read the template csv files in inst folder containing pre-defined metadata
-#' @param file Which parameter file to read? Possible values are \code{"observations"}, \code{"models"} or \code{"variables"}.
+#' @param file Which parameter file to read? Possible values are \code{"observations"},
+#'  \code{"models"}, \code{"variables"} or \code{"products"}.
 #' @return A \code{data.frame}
 #' @importFrom utils read.table
 #' @importFrom magrittr %>%
 #' @keywords internal
 
 loadTemplateFile <- function(file) {
-    file <- match.arg(file, choices = c("observations", "models", "variables"))
+    file <- match.arg(file, choices = c("observations", "models", "variables", "products"))
     filename <- switch(file,
                        "observations" = "template_ref_datasets.csv",
                        "models" = "template_fcst_datasets.csv",
-                       "variables" = "template_variables.csv")
+                       "variables" = "template_variables.csv",
+                       "products" = "template_products.csv")
     system.file(filename, package = "metaclipR.qa4seas") %>% read.table(header = TRUE, sep = ",",
                                                                         stringsAsFactors = FALSE,
                                                                         na.strings = "") %>% return()
 }
 
+
+#' @title Derive aggregation arg.list
+#' @description Infer the aggregation parameters list given a variable and product type
+#' @param product.type product type parameter string
+#' @param var_code variable code string
+#' @return An argument list, as required by \code{\link{[metaclipR]metaclipR.Aggregation}}
+#' @keywords internal
+
+setAggrArgList <- function(product.type, var_code) {
+    arg.list <- list()
+    ref.prod <- loadTemplateFile(file = "products")
+    ref.var <- loadTemplateFile(file = "variables")
+    ind.p <- grep(product.type, ref.prod$product_code, fixed = TRUE)
+    ind.v <- grep(var_code, ref.var$var_code, fixed = TRUE)
+    if (!is.na(ref.prod$aggr.lon[ind.p])) arg.list$aggr.lon$FUN <- ref.prod$aggr.lon[ind.p]
+    if (!is.na(ref.prod$aggr.lat[ind.p])) arg.list$aggr.lat$FUN <- ref.prod$aggr.lat[ind.p]
+    arg.list$aggr.d$FUN <- ref.var$aggr.d[ind.v]
+    arg.list$aggr.m$FUN <- ref.var$aggr.m[ind.v]
+    if (isTRUE(ref$aggr.y)) arg.list$aggr.y$FUN <- ref.var$aggr.y[ind.v]
+    return(arg.list)
+}
 
