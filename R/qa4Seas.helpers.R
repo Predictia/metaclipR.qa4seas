@@ -49,7 +49,7 @@ parseSeason <- function(init, season, several.ok = TRUE) {
 #' @return Integer, number of members
 
 defineNmembers <- function(model, model.type, combination) {
-    fcst.info <- loadTemplateFile("models")
+    fcst.info <- loadTemplateFile(file = "datasets")
     ref <- fcst.info[grep(model, fcst.info$qa4seas_code, fixed = TRUE), ]
     n <- if (model.type == "hindcast") {
         ref$HindcastEnsembleSize
@@ -124,18 +124,17 @@ getNdays <- function(d) {
 
 #' @title Read template files
 #' @description Read the template csv files in inst folder containing pre-defined metadata
-#' @param file Which parameter file to read? Possible values are \code{"observations"},
-#'  \code{"models"}, \code{"variables"} or \code{"products"}.
+#' @param file Which parameter file to read? Possible values are
+#'  \code{"datasets"}, \code{"variables"} or \code{"products"}.
 #' @return A \code{data.frame}
 #' @importFrom utils read.table
 #' @importFrom magrittr %>%
 #' @keywords internal
 
 loadTemplateFile <- function(file) {
-    file <- match.arg(file, choices = c("observations", "models", "variables", "products"))
+    file <- match.arg(file, choices = c("datasets", "variables", "products"))
     filename <- switch(file,
-                       "observations" = "template_ref_datasets.csv",
-                       "models" = "template_fcst_datasets.csv",
+                       "datasets" = "template_datasets.csv",
                        "variables" = "template_variables.csv",
                        "products" = "template_products.csv")
     system.file(filename, package = "metaclipR.qa4seas") %>% read.table(header = TRUE, sep = ",",
@@ -164,4 +163,83 @@ setAggrArgList <- function(product.type, var_code) {
     if (isTRUE(ref.prod$aggr.y[ind.p])) arg.list$aggr.y$FUN <- ref.var$aggr.y[ind.v]
     return(arg.list)
 }
+
+
+
+
+#' @title Start a QA4Seas dataset graph
+#' @description Start a QA4Seas dataset graph fiev a dataset (possibly a multimodel)
+#' @param pkg pkg
+#' @param v version
+#' @param fun function
+#' @param par.list Full list of parameters
+#' @param model.type Character string specifying the type of model.
+#' @param RefSpatialExtent Ref spatial extent
+#' @param var_code individual var code
+#' @param prod.info individual product info list
+#' @param init individual init
+#' @param season individual season
+#' @return A metaclipR structure. The terminal node belong either to the specific subclass of Dataset-class
+#' for model lists of length one, or ds:Ensemble-class, in case several models are included in
+#'  the \code{forecasting_system} parameter.
+#' @details The function internally handles the recursive listing in case of multimodel ensembles.
+#' The specific inputs come from the ouer wrapping function
+#' @keywords internal
+#' @importFrom magrittr %>%
+#' @importFrom metaclipR metaclipR.Aggregation metaclipR.Ensemble metaclipR.Dataset
+
+# model.par = models
+# model.type = "hindcast"
+
+startModelGraph <- function(pkg = "QA4Seas-prototype", v = "1.0.1",
+                            fun = "QA4Seas.py",
+                            par.list, model.type, RefSpatialExtent,
+                            var_code, prod.info, init, season) {
+    model.type <- match.arg(model.type, choices = c("ref", "hindcast", "forecast"))
+    model.par <- ifelse(model.type == "ref", par.list$reference, par.list$forecasting_systems)
+    fcst.info <- loadTemplateFile(file = "datasets")
+    ds.class <- switch(model.type,
+                       "hindcast" = "SeasonalHindcast",
+                       "forecast" = "SeasonalOperationalForecast",
+                       "ref" = "Reanalysis"
+    )
+    h.list <- lapply(1:length(model.par), function(x) {
+        model <- model.par[x]
+        ref <- fcst.info[grep(model, fcst.info$qa4seas_code, fixed = TRUE),]
+            g <- metaclipR::metaclipR.Dataset(Dataset.name = model,
+                                              GCM = ref$SeasonalForecastingSystem,
+                                              Dataset.subclass = ds.class,
+                                              DataProvider = ref$DataProvider,
+                                              ModellingCenter = ref$ModellingCenter,
+                                              Project = ref$Project)
+            ## Define datasetSubsets
+            g <- qa4seas.DatasetSubset(package = pkg, version = v,
+                                       graph = g, var_code,
+                                       init,
+                                       par.list,
+                                       RefSpatialExtent,
+                                       model,
+                                       model.type = model.type,
+                                       season,
+                                       prod.info)
+            ## Define aggregations
+            g <- metaclipR.Aggregation(package = pkg, version = v,
+                                       graph = g,
+                                       fun = fun,
+                                       arg.list = setAggrArgList(prod.info$type, var_code),
+                                       use.arg.list = FALSE)
+
+    })
+    out <- if (length(h.list) > 1) {
+            metaclipR.Ensemble(package = pkg,
+                               version = v,
+                               graph.list = h.list,
+                               fun = fun,
+                               combination.method = prod.info$combination_methods)
+    } else {
+        h.list[[1]]
+    }
+    invisible(out)
+}
+
 
