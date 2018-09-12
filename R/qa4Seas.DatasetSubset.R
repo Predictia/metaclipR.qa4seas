@@ -112,7 +112,7 @@ qa4seas.DatasetSubset <- function(package, version, graph,
                        label = "ds:hasStandardDefinition")
     # TemporalResolution ---------------------
     timeres.nodename <- paste("TemporalResolution", randomName(), sep = ".")
-    model.info <- loadTemplateFile(file = ifelse(model.type == "ref", "observations", "models"))
+    model.info <- loadTemplateFile("datasets")
     ref <- model.info[grep(model, model.info$qa4seas_code), ]
     time.step <- if (var.meta$atmos) {
         ref$AtmosTimeRes
@@ -138,50 +138,52 @@ qa4seas.DatasetSubset <- function(package, version, graph,
                          getNodeIndexbyName(graph, spatextent.nodename)),
                        label = "ds:hasHorizontalExtent")
     # Realization ----------------------------------------------------
-    combination <- prod.info$combination_methods
-    if (!is.null(combination)) {
-        combination <- switch(combination,
-                              "multmodsimple" = "SimpleCombination",
-                              "multmodpdfaveq" = "PDFaverage",
-                              "multmodpdfavmd" = "PDFaverageEnsmean",
-                              "multmodpdfavrmse" = "PDFaverageRMSE",
-                              "multmodprobrps" = "ProbRPSCombination",
-                              "multmodprobeq" = "ProbCombination",
-                              "multimodresamp" = "ResampCombination"
-        )
-    }
-    n.mem <- defineNmembers(model = model, model.type, combination = combination)
-    if (!is.null(n.mem)) {
-        member.node.names <- vector("list", n.mem)
-        for (i in 1:n.mem) {
-            mem <- paste0("Member_", i)
-            member.node.names[[i]] <- paste("Realization", i, randomName(), sep = ".")
-            graph <- my_add_vertices(graph,
-                                     name = member.node.names[[i]],
-                                     label = mem,
-                                     className = "ds:Realization",
-                                     attr = list("ds:hasMember" = mem))
-            graph <- add_edges(graph,
-                               c(getNodeIndexbyName(graph, DatasetSubset.nodename),
-                                 getNodeIndexbyName(graph, member.node.names[[i]])),
-                               label = "ds:hasRealization")
+    if (model.type != "ref") {
+        combination <- prod.info$combination_methods
+        if (!is.null(combination)) {
+            combination <- switch(combination,
+                                  "multmodsimple" = "SimpleCombination",
+                                  "multmodpdfaveq" = "PDFaverage",
+                                  "multmodpdfavmd" = "PDFaverageEnsmean",
+                                  "multmodpdfavrmse" = "PDFaverageRMSE",
+                                  "multmodprobrps" = "ProbRPSCombination",
+                                  "multmodprobeq" = "ProbCombination",
+                                  "multimodresamp" = "ResampCombination"
+            )
         }
-        # TemporalInstant (initialization) -----------------------------------------------
-        initdates <- parseInit(init, "hindcast", par.list)
-        for (i in 1:n.mem) {
-            node.orig <- member.node.names[[i]]
-            for (j in 1:length(initdates)) {
-                node.dest <- paste0(node.orig, "_init.", j)
-                init.date <- initdates[j]
+        n.mem <- defineNmembers(model = model, model.type, combination = combination)
+        if (!is.null(n.mem)) {
+            member.node.names <- vector("list", n.mem)
+            for (i in 1:n.mem) {
+                mem <- paste0("Member_", i)
+                member.node.names[[i]] <- paste("Realization", i, randomName(), sep = ".")
                 graph <- my_add_vertices(graph,
-                                         name = node.dest,
-                                         label = init.date,
-                                         className = "ds:TemporalInstant",
-                                         attr = list("prov:generatedAtTime" = init.date))
+                                         name = member.node.names[[i]],
+                                         label = mem,
+                                         className = "ds:Realization",
+                                         attr = list("ds:hasMember" = mem))
                 graph <- add_edges(graph,
-                                   c(getNodeIndexbyName(graph, node.orig),
-                                     getNodeIndexbyName(graph, node.dest)),
-                                   label = "ds:hasInitializationTime")
+                                   c(getNodeIndexbyName(graph, DatasetSubset.nodename),
+                                     getNodeIndexbyName(graph, member.node.names[[i]])),
+                                   label = "ds:hasRealization")
+            }
+            # TemporalInstant (initialization) -----------------------------------------------
+            initdates <- parseInit(init, "hindcast", par.list)
+            for (i in 1:n.mem) {
+                node.orig <- member.node.names[[i]]
+                for (j in 1:length(initdates)) {
+                    node.dest <- paste0(node.orig, "_init.", j)
+                    init.date <- initdates[j]
+                    graph <- my_add_vertices(graph,
+                                             name = node.dest,
+                                             label = init.date,
+                                             className = "ds:TemporalInstant",
+                                             attr = list("prov:generatedAtTime" = init.date))
+                    graph <- add_edges(graph,
+                                       c(getNodeIndexbyName(graph, node.orig),
+                                         getNodeIndexbyName(graph, node.dest)),
+                                       label = "ds:hasInitializationTime")
+                }
             }
         }
     }
@@ -189,9 +191,16 @@ qa4seas.DatasetSubset <- function(package, version, graph,
     filter.month <- as.list(season)
     # filter.month <- as.list(getSeason(output))
     names(filter.month) <- paste("ds:filterMonth", 1:length(filter.month), sep = ".")
-    startTime <- paste(substr(initdates[1],1,4), season[1], "01", sep = "-") %>% as.POSIXlt() %>%
-        as.POSIXct() %>% format(format = "%Y-%m-%d")
-    aux <- paste(substr(tail(initdates, 1),1,4), tail(season, 1), "01", sep = "-")
+    if (model.type != "ref") {
+        startTime <- paste(substr(initdates[1],1,4), season[1], "01", sep = "-") %>% as.POSIXlt() %>%
+            as.POSIXct() %>% format(format = "%Y-%m-%d")
+        aux <- paste(substr(tail(initdates, 1),1,4), tail(season, 1), "01", sep = "-")
+    } else {
+        yr.range <- strsplit(par.list$hindcast_period, split = "-") %>% unlist()
+        startTime <- paste("01", season[1], yr.range[1], sep = "-") %>% as.POSIXlt() %>%
+            as.POSIXct() %>% format(format = "%Y-%m-%d")
+        aux <- paste("01", tail(season,1), yr.range[2], sep = "-")
+    }
     ndays <- getNdays(aux) %>% as.integer()
     endTime <- gsub("01$", ndays, aux) %>% as.POSIXlt() %>%
         as.POSIXct() %>% format(format = "%Y-%m-%d")
