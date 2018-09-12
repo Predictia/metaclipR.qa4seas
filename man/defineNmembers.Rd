@@ -4,7 +4,7 @@
 \alias{defineNmembers}
 \title{Define number of members}
 \usage{
-defineNmembers(model, model.type, combination.method)
+defineNmembers(model, model.type, combination)
 }
 \arguments{
 \item{model}{model string, as read from the parameters file}

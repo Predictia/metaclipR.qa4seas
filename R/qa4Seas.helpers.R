@@ -148,7 +148,7 @@ loadTemplateFile <- function(file) {
 #' @description Infer the aggregation parameters list given a variable and product type
 #' @param product.type product type parameter string
 #' @param var_code variable code string
-#' @return An argument list, as required by \code{\link{[metaclipR]metaclipR.Aggregation}}
+#' @return An argument list, as required by \code{\link[metaclipR]{metaclipR.Aggregation}}
 #' @keywords internal
 
 setAggrArgList <- function(product.type, var_code) {
@@ -161,7 +161,7 @@ setAggrArgList <- function(product.type, var_code) {
     if (!is.na(ref.prod$aggr.lat[ind.p])) arg.list$aggr.lat$FUN <- ref.prod$aggr.lat[ind.p]
     arg.list$aggr.d$FUN <- ref.var$aggr.d[ind.v]
     arg.list$aggr.m$FUN <- ref.var$aggr.m[ind.v]
-    if (isTRUE(ref$aggr.y)) arg.list$aggr.y$FUN <- ref.var$aggr.y[ind.v]
+    if (isTRUE(ref.prod$aggr.y[ind.p])) arg.list$aggr.y$FUN <- ref.var$aggr.y[ind.v]
     return(arg.list)
 }
 

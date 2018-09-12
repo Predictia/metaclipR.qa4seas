@@ -2,12 +2,15 @@ Package: metaclipR.qa4seas
 Type: Package
 Depends:
     R(>= 3.1.0),
-    metaclipR
+    metaclipR(>= 1.1.1)
 Imports:
+    igraph,
     magrittr,
+    utils,
     yaml
 Title: Extend METACLIP to the QA4Seas prototype
 Version: 0.1.0
+Date: 2018-09-12
 Authors@R: as.person(c(
     "Predictia <http://www.predictia.es/en> [cph]",
     "Joaquín Bedia <bediaj@predictia.es> [aut, cre]",

@@ -7,7 +7,8 @@
 loadTemplateFile(file)
 }
 \arguments{
-\item{file}{Which parameter file to read? Possible values are \code{"observations"}, \code{"models"} or \code{"variables"}.}
+\item{file}{Which parameter file to read? Possible values are \code{"observations"},
+\code{"models"}, \code{"variables"} or \code{"products"}.}
 }
 \value{
 A \code{data.frame}
