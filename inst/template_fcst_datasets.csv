@@ -1,7 +1,0 @@
-qa4seas_code,ModellingCenter,DataProvider,Dataset_name,SeasonalForecastingSystem,Project,ForecastEnsembleSize,HindcastEnsembleSize,AtmosTimeRes,OceanTimeRes
-ecmf-system5,ECMWF,CDS,ECMWF-System5,SEAS5,C3S,51,25,20,60
-ecmf-system4,ECMWF,CDS,ECMWF-System4,SEAS4,C3S,51,15,45,60
-lfpw-system5,MeteoFrance,CDS,MeteoFrance-System5,MF-System5,C3S,51,15,15,60
-egrr-glosea5,MOHC,CDS,UKMO-GloSea5,GloSea5-GC2,C3S,28,12,15,22.5
-,DWD,CDS,DWD-GCFS,GCFS_2.0,C3S,50,30,3.33,60
-,CMCC,CDS,CMCC-SPS3,CMCC-SPS3,C3S,50,40,30,18
