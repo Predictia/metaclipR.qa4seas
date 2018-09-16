@@ -6,7 +6,8 @@
 \usage{
 qa4seas.DatasetSubset(package, version, graph, var_code, init, par.list,
   RefSpatialExtent, model, model.type, season, prod.info,
-  proj = "LatLon", resX = "1_deg", resY = "1_deg")
+  proj = "LatLon", resX = "1_deg", resY = "1_deg",
+  disable.command = TRUE)
 }
 \arguments{
 \item{package}{Software Package string}
@@ -38,6 +39,8 @@ qa4seas.DatasetSubset(package, version, graph, var_code, init, par.list,
 \item{resX}{Character. Spatial resolution of X coordinates. Unused, default to \code{"1_deg"}}
 
 \item{resY}{Same as \code{resX}, for Y-coordinates}
+
+\item{disable.command}{Logical flag, passed to the argument of the same name in \code{\link[metaclipR]{metaclipR.DatasetSubset}}}
 }
 \description{
 Uses information from the parameter file to extract the DatasetSubset-class definition

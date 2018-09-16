@@ -6,7 +6,7 @@
 \usage{
 startModelGraph(pkg = "QA4Seas-prototype", v = "1.0.1",
   fun = "QA4Seas.py", par.list, model.type, RefSpatialExtent, var_code,
-  prod.info, init, season)
+  prod.info, init, season, disable.command = TRUE)
 }
 \arguments{
 \item{pkg}{pkg}
@@ -28,6 +28,8 @@ startModelGraph(pkg = "QA4Seas-prototype", v = "1.0.1",
 \item{init}{individual init}
 
 \item{season}{individual season}
+
+\item{disable.command.}{Default to \code{TRUE}. Passed to \code{\link{qa4seas.DatasetSubset}}}
 }
 \value{
 A metaclipR structure. The terminal node belong either to the specific subclass of Dataset-class
