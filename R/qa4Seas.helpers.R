@@ -196,7 +196,11 @@ startModelGraph <- function(pkg = "QA4Seas-prototype", v = "1.0.1",
                             par.list, model.type, RefSpatialExtent,
                             var_code, prod.info, init, season) {
     model.type <- match.arg(model.type, choices = c("ref", "hindcast", "forecast"))
-    model.par <- ifelse(model.type == "ref", par.list$reference, par.list$forecasting_systems)
+    model.par <- if (model.type == "ref") {
+        par.list$reference
+    } else {
+        par.list$forecasting_systems
+    }
     fcst.info <- loadTemplateFile(file = "datasets")
     ds.class <- switch(model.type,
                        "hindcast" = "SeasonalHindcast",
@@ -206,40 +210,65 @@ startModelGraph <- function(pkg = "QA4Seas-prototype", v = "1.0.1",
     h.list <- lapply(1:length(model.par), function(x) {
         model <- model.par[x]
         ref <- fcst.info[grep(model, fcst.info$qa4seas_code, fixed = TRUE),]
-            g <- metaclipR::metaclipR.Dataset(Dataset.name = model,
-                                              GCM = ref$SeasonalForecastingSystem,
-                                              Dataset.subclass = ds.class,
-                                              DataProvider = ref$DataProvider,
-                                              ModellingCenter = ref$ModellingCenter,
-                                              Project = ref$Project)
-            ## Define datasetSubsets
-            g <- qa4seas.DatasetSubset(package = pkg, version = v,
-                                       graph = g, var_code,
-                                       init,
-                                       par.list,
-                                       RefSpatialExtent,
-                                       model,
-                                       model.type = model.type,
-                                       season,
-                                       prod.info)
-            ## Define aggregations
-            g <- metaclipR.Aggregation(package = pkg, version = v,
-                                       graph = g,
-                                       fun = fun,
-                                       arg.list = setAggrArgList(prod.info$type, var_code),
-                                       use.arg.list = FALSE)
+        aux <- ifelse(ds.class == "Reanalysis", ref$Dataset_name, model)
+        g <- metaclipR::metaclipR.Dataset(Dataset.name = aux,
+                                          GCM = ref$SeasonalForecastingSystem,
+                                          Dataset.subclass = ds.class,
+                                          DataProvider = ref$DataProvider,
+                                          ModellingCenter = ref$ModellingCenter,
+                                          Project = ref$Project)
+        ## Define datasetSubsets
+        g <- qa4seas.DatasetSubset(package = pkg, version = v,
+                                   graph = g, var_code,
+                                   init,
+                                   par.list,
+                                   RefSpatialExtent,
+                                   model,
+                                   model.type = model.type,
+                                   season,
+                                   prod.info)
+        ## Define aggregations
+        g <- metaclipR.Aggregation(package = pkg, version = v,
+                                   graph = g,
+                                   fun = fun,
+                                   arg.list = setAggrArgList(prod.info$type, var_code),
+                                   use.arg.list = FALSE)
 
     })
     out <- if (length(h.list) > 1) {
-            metaclipR.Ensemble(package = pkg,
-                               version = v,
-                               graph.list = h.list,
-                               fun = fun,
-                               combination.method = prod.info$combination_methods)
+        metaclipR.Ensemble(package = pkg,
+                           version = v,
+                           graph.list = h.list,
+                           fun = fun,
+                           combination.method = prod.info$combination_methods)
     } else {
         h.list[[1]]
     }
     invisible(out)
 }
 
+
+#' @title Infer season of the previous observed time series
+#' @description Infer the season of the previous observed time series in ENSO plume plots
+#' @param season Season of the observed reference used as reference for ACC and anomaly calculation
+#' @param n.prev.months Number of previous months used before initialization. Default to 4, as usual in C3S plumes
+#' @return An integer vector, with the season definition
+#' @details interna helper used for metaclipR.ENSOplume in the QA4Seas prototype
+#' @keywords internal
+
+adjustPrevSeasonENSOplume <- function(season, n.prev.months = 4) {
+    ref <- 1:12
+    ini <- season[1] - 1
+    if (ini == 0) ini <- 12
+    end.ref <- match(ini, ref)
+    start.month <- ref[end.ref] - n.prev.months
+    if (start.month <= 0) start.month <- 12 + start.month
+    start.ref <- match(start.month, ref)
+    new.season <- if (start.ref < end.ref) {
+        ref[start.ref:end.ref]
+    } else {
+        c(start.ref,12,1:end.ref)
+    }
+    return(new.season)
+}
 
