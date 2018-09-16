@@ -179,6 +179,7 @@ setAggrArgList <- function(product.type, var_code) {
 #' @param prod.info individual product info list
 #' @param init individual init
 #' @param season individual season
+#' @param disable.command. Default to \code{TRUE}. Passed to \code{\link{qa4seas.DatasetSubset}}
 #' @return A metaclipR structure. The terminal node belong either to the specific subclass of Dataset-class
 #' for model lists of length one, or ds:Ensemble-class, in case several models are included in
 #'  the \code{forecasting_system} parameter.
@@ -194,7 +195,8 @@ setAggrArgList <- function(product.type, var_code) {
 startModelGraph <- function(pkg = "QA4Seas-prototype", v = "1.0.1",
                             fun = "QA4Seas.py",
                             par.list, model.type, RefSpatialExtent,
-                            var_code, prod.info, init, season) {
+                            var_code, prod.info, init, season,
+                            disable.command = TRUE) {
     model.type <- match.arg(model.type, choices = c("ref", "hindcast", "forecast"))
     model.par <- if (model.type == "ref") {
         par.list$reference
@@ -226,13 +228,15 @@ startModelGraph <- function(pkg = "QA4Seas-prototype", v = "1.0.1",
                                    model,
                                    model.type = model.type,
                                    season,
-                                   prod.info)
+                                   prod.info,
+                                   disable.command = disable.command)
         ## Define aggregations
         g <- metaclipR.Aggregation(package = pkg, version = v,
                                    graph = g,
                                    fun = fun,
                                    arg.list = setAggrArgList(prod.info$type, var_code),
-                                   use.arg.list = FALSE)
+                                   use.arg.list = FALSE,
+                                   disable.command = disable.command)
 
     })
     out <- if (length(h.list) > 1) {
@@ -240,7 +244,8 @@ startModelGraph <- function(pkg = "QA4Seas-prototype", v = "1.0.1",
                            version = v,
                            graph.list = h.list,
                            fun = fun,
-                           combination.method = prod.info$combination_methods)
+                           combination.method = prod.info$combination_methods,
+                           disable.command = disable.command)
     } else {
         h.list[[1]]
     }

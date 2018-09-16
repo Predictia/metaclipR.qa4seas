@@ -34,6 +34,7 @@
 #' @param resX Character. Spatial resolution of X coordinates. Unused, default to \code{"1_deg"}
 #' @param resY Same as \code{resX}, for Y-coordinates
 #' @param prod.info Product parameters, previously read
+#' @param disable.command Logical flag, passed to the argument of the same name in \code{\link[metaclipR]{metaclipR.DatasetSubset}}
 #' @importFrom igraph add_edges
 #' @importFrom metaclipR my_add_vertices getNodeIndexbyName randomName my_union_graph metaclip.graph.Command setNodeName
 
@@ -54,7 +55,8 @@ qa4seas.DatasetSubset <- function(package, version, graph,
                                   prod.info,
                                   proj = "LatLon",
                                   resX = "1_deg",
-                                  resY = "1_deg") {
+                                  resY = "1_deg",
+                                  disable.command = TRUE) {
     parent.node <- graph$parentnodename
     graph <- graph$graph
     if (class(graph) != "igraph") {
@@ -219,24 +221,26 @@ qa4seas.DatasetSubset <- function(package, version, graph,
                          getNodeIndexbyName(graph, timeper.nodename)),
                        label = "ds:hasValidTemporalExtent")
     # ARGUMENT - COMMAND METADATA ----------------------------------------------
-    arg.list <- list("variables" = var_code,
-                     "initialization_dates" = init,
-                     "forecasting_systems" = model,
-                     "origin_grid" = par.list$origin_grid,
-                     "type" = prod.info$type,
-                     "forecast_time_intervals" = prod.info$forecast_time_intervals,
-                     "combination_methods" = prod.info$combination_methods)
-    arg.list <- if (model.type == "forecast") {
-        c(arg.list, "forecast_year" = par.list$forecast_year)
-    } else {
-        c(arg.list, "hindcast_period" = par.list$hindcast_period)
+    if (!disable.command) {
+        arg.list <- list("variables" = var_code,
+                         "initialization_dates" = init,
+                         "forecasting_systems" = model,
+                         "origin_grid" = par.list$origin_grid,
+                         "type" = prod.info$type,
+                         "forecast_time_intervals" = prod.info$forecast_time_intervals,
+                         "combination_methods" = prod.info$combination_methods)
+        arg.list <- if (model.type == "forecast") {
+            c(arg.list, "forecast_year" = par.list$forecast_year)
+        } else {
+            c(arg.list, "hindcast_period" = par.list$hindcast_period)
+        }
+        graph <- metaclip.graph.Command(graph,
+                                        package,
+                                        version,
+                                        fun = "QA4Seas.py",
+                                        arg.list = arg.list,
+                                        origin.node.name = DatasetSubset.nodename)
     }
-    graph <- metaclip.graph.Command(graph,
-                                    package,
-                                    version,
-                                    fun = "QA4Seas.py",
-                                    arg.list = arg.list,
-                                    origin.node.name = DatasetSubset.nodename)
     return(list("graph" = graph, "parentnodename" = DatasetSubset.nodename))
 }
 
