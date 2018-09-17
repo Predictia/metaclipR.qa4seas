@@ -194,14 +194,14 @@ qa4seas.DatasetSubset <- function(package, version, graph,
     # filter.month <- as.list(getSeason(output))
     names(filter.month) <- paste("ds:filterMonth", 1:length(filter.month), sep = ".")
     if (model.type != "ref") {
-        startTime <- paste(substr(initdates[1],1,4), season[1], "01", sep = "-") %>% as.POSIXlt() %>%
+        startTime <- paste(substr(initdates[1],1,4), sprintf("%02i", season[1]), "01", sep = "-") %>% as.POSIXlt(format = "%Y-%m-%d") %>%
             as.POSIXct() %>% format(format = "%Y-%m-%d")
-        aux <- paste(substr(tail(initdates, 1),1,4), tail(season, 1), "01", sep = "-")
+        aux <- paste(substr(tail(initdates, 1),1,4), sprintf("%02i", tail(season, 1)), "01", sep = "-")
     } else {
         yr.range <- strsplit(par.list$hindcast_period, split = "-") %>% unlist()
-        startTime <- paste("01", season[1], yr.range[1], sep = "-") %>% as.POSIXlt() %>%
+        startTime <- paste("01", sprintf("%02i", season[1]), yr.range[1], sep = "-") %>% as.POSIXlt() %>%
             as.POSIXct() %>% format(format = "%Y-%m-%d")
-        aux <- paste("01", tail(season,1), yr.range[2], sep = "-")
+        aux <- paste("01", sprintf("%02i", tail(season,1)), yr.range[2], sep = "-")
     }
     ndays <- getNdays(aux) %>% as.integer()
     endTime <- gsub("01$", ndays, aux) %>% as.POSIXlt() %>%
