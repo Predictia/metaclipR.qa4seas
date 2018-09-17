@@ -244,7 +244,7 @@ startModelGraph <- function(pkg = "QA4Seas-prototype", v = "1.0.1",
                            version = v,
                            graph.list = h.list,
                            fun = fun,
-                           combination.method = prod.info$combination_methods,
+                           combination.method = parseCombinationMethod(prod.info),
                            disable.command = disable.command)
     } else {
         h.list[[1]]
@@ -277,3 +277,19 @@ adjustPrevSeasonENSOplume <- function(season, n.prev.months = 4) {
     return(new.season)
 }
 
+#' @keywords internal
+
+parseCombinationMethod <- function(prod.info) {
+    if (!is.null(prod.info$combination_methods)) {
+        switch(prod.info$combination_methods,
+               "multmodsimple" = "SimpleCombination",
+               "multmodresamp" = "ResampCombination",
+               "multmodprobrps" = "ProbRPSCombination",
+               "multmodprobeq" = "ProbCombination",
+               "multmodpdfavrmse" = "PDFaverageRMSE",
+               "multmodpdfavmd" = "PDFaverageEnsmean" ,
+               "multmodpdfaveq" = "PDFaverage")
+    } else {
+        NULL
+    }
+}
