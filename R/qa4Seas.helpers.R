@@ -33,7 +33,9 @@ parseSeason <- function(init, season, several.ok = TRUE) {
     out <- pplyfun(1:length(season), function(i) {
         start <- substr(season[i],1,1) %>% as.integer()
         end <- substr(season[i],3,3) %>% as.integer()
-        (start:end) + init.month
+        sea <- (start:end) + init.month
+        sea[which(sea > 12)] <- sea[which(sea > 12)] - 12
+        return(sea)
     })
     if (several.ok) out <- list(out)
     return(out)
