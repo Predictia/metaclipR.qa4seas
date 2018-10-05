@@ -65,7 +65,7 @@ qa4seas.DatasetSubset <- function(package, version, graph,
     if (class(RefSpatialExtent$graph) != "igraph") stop("Invalid \'RefSpatialExtent\' structure")
     model <- match.arg(model,
                        choices = c("ecmf-ei", "ecmf-e5", "ecmf-system5",
-                                   "ecmf-system4", "lfpw-system5", "egrr-glosea5"))
+                                   "ecmf-system4", "lfpw-system5", "egrr-system12"))
     model.type <- match.arg(model.type, choices = c("ref", "hindcast", "forecast"))
     checkModelType(model, model.type)
     # SubsetNode
